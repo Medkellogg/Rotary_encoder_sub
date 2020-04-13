@@ -22,28 +22,45 @@
 #include <Arduino.h>
 
 #include <RotaryEncoder.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 #define ROTARYSTEPS 1
 #define ROTARYMIN 7
 #define ROTARYMAX 12
 
-// Setup a RoraryEncoder for pins A2 and A3:
+//--- Setup a RoraryEncoder for pins A2 and A3:
 RotaryEncoder encoder(A2, A3);
 
-// Last known rotary position.
+//--- Last known rotary position.
 int lastPos = -1;
-int testNewPos = 0;
+
+//--- Active track number (last selection) - initialize to lowest track
+int tracknumActive = ROTARYMIN;
+int tracknumDisplay;
+int tracknumLast;
+
+//---Setup Rotary Encoder switch on pin D2 with other side to ground - active low
+int rotarySwitch = 2;
+
+//---knob"___" -used to sense and track knob push switch - push to send trackNumActive to display and Turnout Control Arduino
+int knobClick = 1;
+int knobClickLast = 1;
+
+bool knobMoving;
+
+
 
 void setup()
 {
   Serial.begin(115200);
   Serial.println("LimitedRotator example for the RotaryEncoder library.");
-  encoder.setPosition(7 / ROTARYSTEPS); // start with the value of 7.
+  encoder.setPosition(ROTARYMIN / ROTARYSTEPS); // start with the value of ROTARYMIN .
 
+  pinMode(rotarySwitch, INPUT_PULLUP);
   
-} // setup()
+} // End setup()
 
-// Read the current position of the encoder and print out when changed.
 
 void loop()
 {
@@ -52,26 +69,24 @@ void loop()
   // get the current physical position and calc the logical position
 
   int newPos = encoder.getPosition() * ROTARYSTEPS;
-  int testNewPos = newPos;
-
+  
+   /*----------Use of ROTARYMAX inside the if statement: counter will roll from min to max and keep counting in a loop.  To make counter stop at lower limit use ROTARYMIN */
+    
   if (newPos < ROTARYMIN)
   {
-    /*----------Use of ROTARYMAX here(both lines below): counter will roll from min to max and keep counting in a loop.  Use ROTARYMIN, in both lines to make counter stop at lower limit
-    -------------*/
-
     encoder.setPosition(ROTARYMAX / ROTARYSTEPS);
     newPos = ROTARYMAX;
   }
 
+  /*------------Use of ROTARYMIN inside the if statement: counter will roll from max to min and keep counting in a loop.  o make counter stop at upper limit use ROTARYMAX. */
+  
   else if (newPos > ROTARYMAX)
   {
-    /*------------Use of ROTARYMIN here(both lines below): counter will roll from max to min and keep counting in a loop.  Use ROTARYMAX to make counter stop at upper limit.
-    --------------*/
-
     encoder.setPosition(ROTARYMIN / ROTARYSTEPS);
     newPos = ROTARYMIN;
-  }
-  // if
+
+  }  // End if newPos
+  
 
   if (lastPos != newPos)
   {
@@ -86,7 +101,28 @@ void loop()
       Serial.println();
     }
     lastPos = newPos;
-  } // if
+    tracknumDisplay = lastPos;
+
+      Serial.print("tracknumDisplay: ");
+      Serial.print(tracknumDisplay);
+      Serial.println();
+
+      Serial.print("tracknumActive: ");
+      Serial.print(tracknumActive);
+      Serial.println();
+      
+  } // End if lastPos
+
+    //------Read the rotarySwitch for new track selection and update the active track 
+    knobClick = digitalRead(rotarySwitch);   
+    delay(10);
+    if(knobClick != knobClickLast)          
+    {
+      tracknumActive = tracknumDisplay;
+    } // End new active track selection    
+
+    
+  
 } // loop ()
 
 // The End
