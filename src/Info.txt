@@ -1,0 +1,2 @@
+4/8/2020- Rotary encoder has choice of tracks, REV LOOP, min and max counts, start position
+Needs: Interrupt code and button push
